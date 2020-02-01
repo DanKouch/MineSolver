@@ -1,4 +1,5 @@
 import tkinter as tk
+import platform
 from pynput import mouse
 from threading import Thread
 
@@ -10,7 +11,9 @@ class MineSolverInterface(tk.Frame, object):
         super(MineSolverInterface, self).__init__(master=self.master)
         self.master.title("MineSolver")
         self.master.resizable(False, False)
-        self.master.iconbitmap(bitmap="favicon.ico")
+
+        if platform.system() is "Windows":
+            self.master.iconbitmap(bitmap="./favicon.ico")
         
         self.grid()
 
@@ -25,12 +28,6 @@ class MineSolverInterface(tk.Frame, object):
 
         self.select_bounds_button = tk.Button(master=self.settingsFrame, command=self.selectBoundsAction, text="Select Bounds")
         self.select_bounds_button.grid(row=1, column=0, columnspan=2)
-
-        # self.upper_left_coordinate = tk.Text(height=1)
-        # self.upper_left_coordinate.insert("insert", "Upper-left corner")
-        # self.upper_left_coordinate.config(state="disabled")
-        # 
-
 
         self.bound_select_exp = tk.Label(master=self.settingsFrame, height=1, wraplength=200)
         self.bound_select_exp.grid(row=0, column=0, columnspan=2)

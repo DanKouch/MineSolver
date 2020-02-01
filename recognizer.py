@@ -52,11 +52,28 @@ class Recognizer(object):
         8: '8'
     }
 
+    charsToNums = {
+        'L': -20,
+        'F': -5,
+        'B': -10,
+        ' ': -1,
+        '-': 0,
+        '1': 1,
+        '2': 2,
+        '3': 3,
+        '4': 4,
+        '5': 5,
+        '6': 6,
+        '7': 7,
+        '8': 8
+    }
+
     def __init__(self, topLeftCoords, bottomRightCoords, rows, columns):
         self.topLeftCoords = topLeftCoords
         self.bottomRightCoords = bottomRightCoords
         self.rows = rows
         self.columns = columns
+        self.grid = [[]]
 
         self.width = self.bottomRightCoords[0] - self.topLeftCoords[0]
         self.height = self.bottomRightCoords[1] - self.topLeftCoords[1]
@@ -77,17 +94,44 @@ class Recognizer(object):
             "height": self.height
         }
 
-    def getUpdatedGrid(self):
+        self.updateGrid()
+
+    def updateGrid(self):
         self._updateBoardImage()
-        boardArray = []
+        self.grid = []
         for y in range(self.rows):
-            boardArray.append([])
+            self.grid.append([])
             for x in range(self.columns):
-                boardArray[y].append(self._identifyTileByAverage(x, y)[0])
-        return boardArray
+                self.grid[y].append(self._identifyTileByAverage(x, y)[0])
+
+    def update3x3(self, x, y):
+        self._updateBoardImage()
+        for indicies in self.getChunkIndicies(x, y):
+            x, y = indicies
+            self.grid[y][x] = self._identifyTileByAverage(x, y)[0]
+
+    def getChunkIndicies(self, x, y):
+        indicies = self.getSurroundingIndicies(x, y)
+        indicies.insert(4, (x, y))
+        return indicies
+
+    def tileInGrid(self, x, y):
+        return not ((y >= len(self.grid) or y < 0) or (x >= len(self.grid[0]) or x < 0))
+
+    def getSurroundingIndicies(self, x, y):
+        return filter(lambda indicies: self.tileInGrid(indicies[0], indicies[1]),[
+            (x - 1, y - 1),
+            (x, y - 1),
+            (x + 1, y - 1),
+            (x - 1, y),
+            (x + 1, y),
+            (x - 1, y + 1),
+            (x, y + 1),
+            (x + 1, y + 1)
+        ])
 
     def printUpdatedBoard(self):
-        self._updateBoardImage()
+        #self._updateBoardImage()
         precision = []
         for y in range(self.rows):
             for x in range(self.columns):
@@ -97,19 +141,10 @@ class Recognizer(object):
             print("")
         print("Precision Output - Max: ", round(max(precision), 3), "  Min: ", round(min(precision), 3))
 
-
     def _updateBoardImage(self):
         boardImageData = self.sct.grab(self.sctSection)
         self.boardImage = Image.frombytes("RGB", boardImageData.size, boardImageData.bgra, "raw", "BGRX")
 
-    # def _identifyTileByColorSearch(self, x, y):
-    #     tileImage = self._getCroppedSubTile(x, y)
-    #     colorList = list(tileImage.getdata())
-    #     for c in colorList:
-    #         for key in Recognizer.referenceColors:
-    #             if(self._colorDistance(c, Recognizer.referenceColors[key]) < 12):
-    #                 return (key, -1)
-    #     return (0, -1)
 
     def _identifyTileByAverage(self, x, y):
         tileImage = self._getCroppedSubTile(x, y)
